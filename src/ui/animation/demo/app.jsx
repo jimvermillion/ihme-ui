@@ -201,7 +201,7 @@ class App extends React.Component {
         <MultiAnimation
           transitionTargetProp="data"
           transitionToData={lineData}
-          duration={200}
+          duration={3000}
         >
           <MultiLine
             areaStyle={areaStyle}
@@ -251,7 +251,7 @@ class App extends React.Component {
         <MultiAnimation
           transitionTargetProp="data"
           transitionToData={scatterData}
-          duration={500}
+          duration={3000}
         >
           <MultiScatter
             colorScale={colorScale}
