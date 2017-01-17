@@ -1,1 +1,1 @@
-export { default as MultiAnimation } from './src/multi-animation';
+export { default as default } from './src/multi-animation';

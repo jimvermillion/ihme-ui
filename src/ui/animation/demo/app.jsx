@@ -20,11 +20,11 @@ import AxisChart from '../../axis-chart';
 import { MultiLine, MultiScatter } from '../../shape';
 import { XAxis, YAxis } from '../../axis';
 import Button from '../../button';
-import { MultiAnimation } from '../';
+import { default as MultiAnimation } from '../';
 
 const locations = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 let locationIndex = 0;
-const stages = [1, 2, 3, 4];
+const stages = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 const colorScale = scaleOrdinal().domain(stages)
   .range(['red', 'blue', 'orange', 'green']);
@@ -63,7 +63,7 @@ const data = dataGenerator({
     { name: valueField, range: [200, 500], uncertainty: true },
     { name: valueField_2, range: [100, 300], uncertainty: false},
   ],
-  length: 20,
+  length: 30,
 });
 
 class App extends React.Component {
@@ -72,7 +72,7 @@ class App extends React.Component {
     this.state = {
       settings: {
         location_id: locations[locationIndex],
-        stage_id: [2, 3, 4],
+        stage_id: [1, 2],
         checked: false,
       },
     };
@@ -94,20 +94,18 @@ class App extends React.Component {
   }
 
   onChange(e) {
-    // disabled at the moment.
+    let nextSettings;
+    if (e.target.checked) {
+      nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [1, 2, 3, 4, 5, 6, 7, 8, 9] })
+    } else {
+      nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [1, 2] })
+    }
 
-    // let nextSettings;
-    // if (e.target.checked) {
-    //   nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [1, 2, 3, 4] })
-    // } else {
-    //   nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [2, 3, 4] })
-    // }
-    //
-    // this.setState({
-    //   lineData: this.filterLineData(nextSettings, data),
-    //   scatterData: this.filterScatterData(nextSettings, data),
-    //   settings: nextSettings,
-    // });
+    this.setState({
+      lineData: this.filterLineData(nextSettings, data),
+      scatterData: this.filterScatterData(nextSettings, data),
+      settings: nextSettings,
+    });
   }
 
   filterLineData(settings, data) {
@@ -201,7 +199,7 @@ class App extends React.Component {
         <MultiAnimation
           transitionTargetProp="data"
           transitionToData={lineData}
-          duration={3000}
+          duration={500}
         >
           <MultiLine
             areaStyle={areaStyle}
@@ -251,7 +249,7 @@ class App extends React.Component {
         <MultiAnimation
           transitionTargetProp="data"
           transitionToData={scatterData}
-          duration={3000}
+          duration={500}
         >
           <MultiScatter
             colorScale={colorScale}
@@ -285,14 +283,16 @@ class App extends React.Component {
           <div>
             <p>
               <label>
-                {"stage one: "}
+                {"more stages: "}
                 <input type="checkbox" value={1} onChange={this.onChange} />
               </label>
             </p>
           </div>
         </div>
-        {this.renderLineChart()}
-        {this.renderScatterChart()}
+        <div style={rowStyle}>
+          {this.renderLineChart()}
+          {this.renderScatterChart()}
+        </div>
       </div>
     );
   }
