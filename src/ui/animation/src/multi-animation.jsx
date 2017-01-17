@@ -1,8 +1,11 @@
 import React, { PropTypes } from 'react';
 import { PureComponent } from '../../../utils';
+import Timer from './utils/timer';
 import {
   assign,
+  concat,
   difference,
+  filter,
   find,
   includes,
   intersection,
@@ -10,29 +13,39 @@ import {
   zip,
 } from 'lodash';
 import { interpolateObject } from 'd3-interpolate';
-import { timer } from 'd3-timer';
 
 export default class MultiAnimation extends PureComponent {
+  constructor(props) {
+    super(props);
+
+    this.getTimer = this.getTimer.bind(this);
+    this.frameCallback = this.frameCallback.bind(this);
+
+    this.timer = null;
+    this.loopId = null;
+  }
+
   componentWillMount() {
     this.setState({ nextFrameData: this.props.transitionToData });
   }
 
   componentWillReceiveProps(nextProps) {
+    this.getTimer().unsubscribe(this.loopId);
+
     const childProps = React.Children.only(this.props.children).props;
     const keyField = childProps.fieldAccessors.key;
     const dataField = childProps.fieldAccessors.data;
 
     const nextData = nextProps.transitionToData;
-    const prevData = childProps.data;
+    const prevData = this.state.nextFrameData;
 
     const nextDataKeys = map(nextData, d => d[keyField]);
     const prevDataKeys = map(prevData, d => d[keyField]);
 
     const enterKeys = difference(nextDataKeys, prevDataKeys);
     const updateKeys = intersection(nextDataKeys, prevDataKeys);
-    const removeKeys = difference(nextDataKeys, prevDataKeys);
 
-    const enterData = find(nextData, d => includes(enterKeys, d[keyField]));
+    const enterData = filter(nextData, d => includes(enterKeys, d[keyField]));
     const updateData = map(updateKeys, updateKey => ({
       [keyField]: updateKey,
       [dataField]: map(
@@ -40,10 +53,9 @@ export default class MultiAnimation extends PureComponent {
           find(nextData, d => d[keyField] === updateKey)[dataField],
           find(prevData, d => d[keyField] === updateKey)[dataField]
         ),
-        datumPair => interpolateObject(datumPair[0], datumPair[1])
+        datumPair => interpolateObject(datumPair[1], datumPair[0])
       ),
     }));
-    const removeData = find(prevData, d => includes(removeKeys, d[keyField]));
 
     const interpolateData = (t) => {
       return map(updateData, d => ({
@@ -52,17 +64,30 @@ export default class MultiAnimation extends PureComponent {
       }));
     };
 
-    const d3Timer = timer((elapsed) => {
-      let t = (elapsed / this.props.duration);
+    this.loopId = this.getTimer().subscribe(this.frameCallback(interpolateData, enterData), this.props.duration);
+  }
+
+  frameCallback(interpolator, enterData) {
+    return (elapsed, duration) => {
+      let t = elapsed / duration;
+
       if (t > 1) {
-        d3Timer.stop();
         t = 1;
+        this.getTimer().unsubscribe(this.loopId);
       }
 
       this.setState({
-        nextFrameData: interpolateData(t),
+        nextFrameData: enterData ? concat(interpolator(t), enterData) : interpolator(t),
       });
-    });
+    };
+  }
+
+  getTimer() {
+    if (this.timer === null) {
+      this.timer = new Timer();
+    }
+
+    return this.timer;
   }
 
   render() {
