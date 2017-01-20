@@ -20,11 +20,11 @@ import AxisChart from '../../axis-chart';
 import { MultiLine, MultiScatter } from '../../shape';
 import { XAxis, YAxis } from '../../axis';
 import Button from '../../button';
-import { default as MultiAnimation } from '../';
+import { default as Animation } from '../src/animation';
 
 const locations = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 let locationIndex = 0;
-const stages = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+const stages = [1, 2, 3];
 
 const colorScale = scaleOrdinal().domain(stages)
   .range(['red', 'blue', 'orange', 'green']);
@@ -33,9 +33,11 @@ const symbolScale = scaleOrdinal().domain(stages)
   .range(['circle', 'cross', 'diamond', 'star']);
 
 const dims = {
-  width: 400,
-  height: 200,
+  width: 500,
+  height: 500,
 };
+
+const DURATION = 200;
 
 const padding = { top: 20, bottom: 40, left: 55, right: 20 };
 
@@ -50,8 +52,8 @@ const pageStyle = { display: 'flex', flexDirection: 'column' };
 const rowStyle = { display: 'flex' };
 
 const keyField = 'year_id';
-const valueField = 'values';
-const valueField_2 = 'values_2';
+const valueField = 'value';
+const valueField_2 = 'value_B';
 const chartClassName = ['foo', 'bar'];
 
 const data = dataGenerator({
@@ -61,7 +63,7 @@ const data = dataGenerator({
   ],
   valueKeys: [
     { name: valueField, range: [200, 500], uncertainty: true },
-    { name: valueField_2, range: [100, 300], uncertainty: false},
+    { name: valueField_2, range: [0, 1], uncertainty: true},
   ],
   length: 30,
 });
@@ -72,10 +74,16 @@ class App extends React.Component {
     this.state = {
       settings: {
         location_id: locations[locationIndex],
-        stage_id: [1, 2],
+        stage_id: [1],
         checked: false,
       },
     };
+
+    this.animation = new Animation();
+    this.yAxisWithAnimation = this.animation.YAxisAnimate(YAxis);
+    this.xAxisWithAnimation = this.animation.XAxisAnimate(XAxis);
+    this.multiLineWithAnimation = this.animation.MultiShapeAnimate(MultiLine);
+    this.multiScatterWithAnimation = this.animation.MultiShapeAnimate(MultiScatter);
 
     this.onClick = this.onClick.bind(this);
     this.getNextData = this.getNextData.bind(this);
@@ -96,9 +104,9 @@ class App extends React.Component {
   onChange(e) {
     let nextSettings;
     if (e.target.checked) {
-      nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [1, 2, 3, 4, 5, 6, 7, 8, 9] })
+      nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: stages })
     } else {
-      nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [1, 2] })
+      nextSettings = assign({}, this.state.settings, { checked: e.target.checked, stage_id: [1] })
     }
 
     this.setState({
@@ -125,7 +133,21 @@ class App extends React.Component {
       data,
       d => d.location_id === settings.location_id && includes(settings.stage_id, d.stage_id)
     );
-    const groupedData = groupBy(map(filteredData, d => assign({}, d, { [valueField]: random(100), [valueField_2]: random(200)})), 'stage_id');
+    const groupedData = groupBy(map(filteredData, d => {
+      const x_0 = d[`${valueField_2}_lb`];
+      const x_1 = d[`${valueField_2}_ub`];
+      const y_0 = d[`${valueField}_lb`];
+      const y_1 = d[`${valueField}_ub`];
+
+      return assign(
+        {},
+        d,
+        {
+          [valueField]: random(x_0, x_1),
+          [valueField_2]: random(y_0, y_1),
+        }
+      )
+    }), 'stage_id');
     return map(groupedData, (group, stage) => ({
       key: stage,
       scatter: group,
@@ -184,6 +206,9 @@ class App extends React.Component {
     const xDomain = this.getLineXDomain(flatMap(lineData, (d) => d.line));
     const yDomain = this.getLineYDomain(flatMap(lineData, (d) => d.line));
 
+    const YAxisAnimate = this.yAxisWithAnimation;
+    const MultiLineAnimate = this.multiLineWithAnimation;
+
     return (
       <AxisChart
         clipPath
@@ -196,23 +221,18 @@ class App extends React.Component {
         yScaleType="linear"
         className={chartClassName}
       >
-        <MultiAnimation
-          transitionTargetProp="data"
-          transitionToData={lineData}
-          duration={500}
-        >
-          <MultiLine
-            areaStyle={areaStyle}
-            colorScale={colorScale}
-            data={lineData}
-            fieldAccessors={fieldAccessors}
-            showUncertainty
-            dataAccessors={dataAccessors}
-            onClick={()=>{console.log('click')}}
-          />
-        </MultiAnimation>
+        <MultiLineAnimate
+          duration={DURATION}
+          areaStyle={areaStyle}
+          colorScale={colorScale}
+          data={lineData}
+          fieldAccessors={fieldAccessors}
+          showUncertainty
+          dataAccessors={dataAccessors}
+          onClick={()=>{console.log('click')}}
+        />
         <XAxis style={axisStyle} label="Year" />
-        <YAxis style={axisStyle} label="# of cases" />
+        <YAxisAnimate duration={DURATION} style={axisStyle} label="# of cases" />
       </AxisChart>
     );
   }
@@ -234,6 +254,10 @@ class App extends React.Component {
     const xDomain = this.getScatterXDomain(flatMap(scatterData, (d) => d.scatter));
     const yDomain = this.getScatterYDomain(flatMap(scatterData, (d) => d.scatter));
 
+    const YAxisAnimate = this.yAxisWithAnimation;
+    const XAxisAnimate = this.xAxisWithAnimation;
+    const MultiScatterAnimate = this.multiScatterWithAnimation;
+
     return (
       <AxisChart
         clipPath
@@ -246,23 +270,18 @@ class App extends React.Component {
         yScaleType="linear"
         className={chartClassName}
       >
-        <MultiAnimation
-          transitionTargetProp="data"
-          transitionToData={scatterData}
-          duration={500}
-        >
-          <MultiScatter
-            colorScale={colorScale}
-            data={scatterData}
-            fieldAccessors={fieldAccessors}
-            dataAccessors={dataAccessors}
-            onClick={()=>{console.log('click')}}
-            symbolField="stage_id"
-            symbolScale={symbolScale}
-          />
-        </MultiAnimation>
-        <XAxis style={axisStyle} label="Value 1" />
-        <YAxis style={axisStyle} label="Value 2" />
+        <MultiScatterAnimate
+          duration={DURATION}
+          colorScale={colorScale}
+          data={scatterData}
+          fieldAccessors={fieldAccessors}
+          dataAccessors={dataAccessors}
+          onClick={()=>{console.log('click')}}
+          symbolField="stage_id"
+          symbolScale={symbolScale}
+        />
+        <XAxisAnimate style={axisStyle} label="Value 1" duration={DURATION} />
+        <YAxisAnimate style={axisStyle} label="Value 2" duration={DURATION} />
       </AxisChart>
     );
   }
