@@ -79,9 +79,9 @@ export default class Animation {
         }));
 
         const interpolateData = (t) => map(updateData, d => ({
-            [keyField]: d[keyField],
-            [dataField]: map(d[dataField], interpolateDatum => interpolateDatum(t)),
-          }));
+          [keyField]: d[keyField],
+          [dataField]: map(d[dataField], interpolateDatum => interpolateDatum(t)),
+        }));
 
         const nextYScaleDomain = nextProps.scales.y.domain();
         const nextXScaleDomain = nextProps.scales.x.domain();
