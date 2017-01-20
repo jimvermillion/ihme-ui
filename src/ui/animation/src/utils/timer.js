@@ -1,5 +1,5 @@
 import { now, timer } from 'd3-timer';
-import { forEach, pullAt } from 'lodash';
+import { forEach } from 'lodash';
 
 export default class Timer {
   constructor() {
@@ -10,7 +10,9 @@ export default class Timer {
 
   loop() {
     forEach(this.subscribers, (subscriber) => {
-      subscriber.callback(now() - subscriber.startTime, subscriber.duration);
+      if (subscriber) {
+        subscriber.callback(now() - subscriber.startTime, subscriber.duration);
+      }
     });
   }
 
@@ -28,7 +30,7 @@ export default class Timer {
 
   unsubscribe(id) {
     if (id !== null) {
-      pullAt(this.subscribers, [id - 1]);
+      delete this.subscribers[id - 1];
     }
   }
 }
