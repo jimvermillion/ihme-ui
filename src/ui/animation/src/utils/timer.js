@@ -1,9 +1,9 @@
 import { now, timer } from 'd3-timer';
-import { forEach } from 'lodash';
+import { forEach, uniqueId } from 'lodash';
 
 export default class Timer {
   constructor() {
-    this.subscribers = [];
+    this.subscribers = {};
     this.loop = this.loop.bind(this);
     this.timer = timer(this.loop);
   }
@@ -17,11 +17,15 @@ export default class Timer {
   }
 
   subscribe(callback, duration) {
-    return this.subscribers.push({
+    const id = uniqueId('loop_');
+
+    this.subscribers[id] = {
       startTime: now(),
       callback,
       duration,
-    });
+    };
+
+    return id;
   }
 
   stop() {
@@ -30,7 +34,7 @@ export default class Timer {
 
   unsubscribe(id) {
     if (id !== null) {
-      delete this.subscribers[id - 1];
+      delete this.subscribers[id];
     }
   }
 }
