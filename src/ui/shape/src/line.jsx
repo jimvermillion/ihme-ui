@@ -11,6 +11,7 @@ import {
   PureComponent,
   stateFromPropUpdates,
 } from '../../../utils';
+import LineAnimate from '../../animation/src/animate-line';
 
 export default class Line extends PureComponent {
   constructor(props) {
@@ -38,6 +39,12 @@ export default class Line extends PureComponent {
     const {
       path,
     } = this.state;
+
+    if (this.props.animate) {
+      return (
+        <LineAnimate />
+      );
+    }
 
     return (
       <path
