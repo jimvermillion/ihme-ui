@@ -47,6 +47,7 @@ export default class Scatter extends PureComponent {
     const { selectedDataMappedToKeys, sortedData } = this.state;
 
     const childProps = pick(this.props, [
+      'animate',
       'focusedClassName',
       'focusedStyle',
       'onClick',
