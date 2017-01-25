@@ -15,6 +15,7 @@ import {
 export default class MultiLine extends PureComponent {
   render() {
     const {
+      animate,
       areaClassName,
       areaStyle,
       areaValuesIteratee,
@@ -70,6 +71,7 @@ export default class MultiLine extends PureComponent {
               [
                 (!!dataAccessors.x && !!dataAccessors.y0 && !!dataAccessors.y1 && !!areaValues) ?
                   <Area
+                    animate={animate}
                     className={areaClassName}
                     dataAccessors={dataAccessors}
                     data={areaValues}
@@ -84,6 +86,7 @@ export default class MultiLine extends PureComponent {
                   /> : null,
                 (!!dataAccessors.x && !!dataAccessors.y && !!lineValues) ?
                   <Line
+                    animate={animate}
                     className={lineClassName}
                     dataAccessors={dataAccessors}
                     data={lineValues}
