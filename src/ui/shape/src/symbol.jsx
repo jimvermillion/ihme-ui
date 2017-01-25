@@ -12,6 +12,7 @@ import {
   stateFromPropUpdates,
 } from '../../../utils';
 import { getSymbol, symbolTypes } from '../../../utils/symbol';
+import PathAnimate from '../../animation/src/animate-path';
 
 const SYMBOL_ROTATE = {
   down: 180,
@@ -83,6 +84,26 @@ export default class Symbol extends PureComponent {
       translateY,
     } = this.props;
     const { path, rotate, style } = this.state;
+
+    if (this.props.animate) {
+      return (
+        <PathAnimate
+          animate={this.props.animate}
+          d={path}
+          className={classNames(className, {
+            [selectedClassName]: selected && selectedClassName,
+            [focusedClassName]: focused && selectedClassName,
+          }) || (void 0)}
+          clipPath={clipPathId && `url(#${clipPathId})`}
+          onClick={eventHandleWrapper(onClick, datum, this)}
+          onMouseLeave={eventHandleWrapper(onMouseLeave, datum, this)}
+          onMouseMove={eventHandleWrapper(onMouseMove, datum, this)}
+          onMouseOver={eventHandleWrapper(onMouseOver, datum, this)}
+          style={style}
+          transform={`translate(${translateX}, ${translateY}) rotate(${rotate})`}
+        />
+      );
+    }
 
     return (
       <path
