@@ -11,6 +11,7 @@ import {
   PureComponent,
   stateFromPropUpdates,
 } from '../../../utils';
+import PathAnimate from '../../animation/src/animate-path';
 
 export default class Area extends PureComponent {
   constructor(props) {
@@ -32,12 +33,30 @@ export default class Area extends PureComponent {
       onMouseLeave,
       onMouseMove,
       onMouseOver,
+      scales,
       style,
     } = this.props;
 
     const {
       path,
     } = this.state;
+
+    if (this.props.animate) {
+      return (
+        <PathAnimate
+          animate={this.props.animate}
+          className={className && classNames(className)}
+          clipPath={clipPathId && `url(#${clipPathId})`}
+          d={path}
+          onClick={eventHandleWrapper(onClick, data, this)}
+          onMouseLeave={eventHandleWrapper(onMouseLeave, data, this)}
+          onMouseMove={eventHandleWrapper(onMouseMove, data, this)}
+          onMouseOver={eventHandleWrapper(onMouseOver, data, this)}
+          scales={scales}
+          style={style}
+        />
+      );
+    }
 
     return (
       <path
