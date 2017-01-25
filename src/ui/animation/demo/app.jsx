@@ -21,6 +21,7 @@ import { MultiLine, MultiScatter } from '../../shape';
 import { XAxis, YAxis } from '../../axis';
 import Button from '../../button';
 import { default as Animation } from '../src/animation';
+import { default as Timer } from '../src/utils/timer';
 
 const locations = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 let locationIndex = 0;
@@ -33,11 +34,11 @@ const symbolScale = scaleOrdinal().domain(stages)
   .range(['circle', 'cross', 'diamond', 'star']);
 
 const dims = {
-  width: 500,
-  height: 500,
+  width: 300,
+  height: 300,
 };
 
-const DURATION = 200;
+const DURATION = 500;
 
 const padding = { top: 20, bottom: 40, left: 55, right: 20 };
 
@@ -80,10 +81,9 @@ class App extends React.Component {
     };
 
     this.animation = new Animation();
+    this.timer = new Timer();
     this.yAxisWithAnimation = this.animation.YAxisAnimate(YAxis);
     this.xAxisWithAnimation = this.animation.XAxisAnimate(XAxis);
-    this.multiLineWithAnimation = this.animation.MultiShapeAnimate(MultiLine);
-    this.multiScatterWithAnimation = this.animation.MultiShapeAnimate(MultiScatter);
 
     this.onClick = this.onClick.bind(this);
     this.getNextData = this.getNextData.bind(this);
@@ -207,7 +207,6 @@ class App extends React.Component {
     const yDomain = this.getLineYDomain(flatMap(lineData, (d) => d.line));
 
     const YAxisAnimate = this.yAxisWithAnimation;
-    const MultiLineAnimate = this.multiLineWithAnimation;
 
     return (
       <AxisChart
@@ -221,8 +220,11 @@ class App extends React.Component {
         yScaleType="linear"
         className={chartClassName}
       >
-        <MultiLineAnimate
-          duration={DURATION}
+        <MultiLine
+          animate={{
+            duration: DURATION,
+            timer: this.timer,
+          }}
           areaStyle={areaStyle}
           colorScale={colorScale}
           data={lineData}
@@ -240,7 +242,7 @@ class App extends React.Component {
   renderScatterChart() {
     const dataAccessors = {
       fill: 'stage_id',
-      key: 'id',
+      key: 'year_id',
       symbol: 'stage_id',
       x: valueField,
       y: valueField_2,
@@ -256,7 +258,6 @@ class App extends React.Component {
 
     const YAxisAnimate = this.yAxisWithAnimation;
     const XAxisAnimate = this.xAxisWithAnimation;
-    const MultiScatterAnimate = this.multiScatterWithAnimation;
 
     return (
       <AxisChart
@@ -270,8 +271,11 @@ class App extends React.Component {
         yScaleType="linear"
         className={chartClassName}
       >
-        <MultiScatterAnimate
-          duration={DURATION}
+        <MultiScatter
+          animate={{
+            duration: DURATION,
+            timer: this.timer,
+          }}
           colorScale={colorScale}
           data={scatterData}
           fieldAccessors={fieldAccessors}
@@ -309,6 +313,8 @@ class App extends React.Component {
           </div>
         </div>
         <div style={rowStyle}>
+          {this.renderLineChart()}
+          {this.renderScatterChart()}
           {this.renderLineChart()}
           {this.renderScatterChart()}
         </div>
