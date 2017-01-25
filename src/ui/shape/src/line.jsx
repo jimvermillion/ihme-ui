@@ -11,7 +11,7 @@ import {
   PureComponent,
   stateFromPropUpdates,
 } from '../../../utils';
-import LineAnimate from '../../animation/src/animate-line';
+import PathAnimate from '../../animation/src/animate-path';
 
 export default class Line extends PureComponent {
   constructor(props) {
@@ -33,6 +33,7 @@ export default class Line extends PureComponent {
       onMouseLeave,
       onMouseMove,
       onMouseOver,
+      scales,
       style,
     } = this.props;
 
@@ -42,7 +43,19 @@ export default class Line extends PureComponent {
 
     if (this.props.animate) {
       return (
-        <LineAnimate />
+        <PathAnimate
+          animate={this.props.animate}
+          className={className && classNames(className)}
+          clipPath={clipPathId && `url(#${clipPathId})`}
+          d={path}
+          fill="none"
+          onClick={eventHandleWrapper(onClick, data, this)}
+          onMouseLeave={eventHandleWrapper(onMouseLeave, data, this)}
+          onMouseMove={eventHandleWrapper(onMouseMove, data, this)}
+          onMouseOver={eventHandleWrapper(onMouseOver, data, this)}
+          scales={scales}
+          style={style}
+        />
       );
     }
 
