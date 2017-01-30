@@ -54,6 +54,7 @@ export default class Area extends PureComponent {
           onMouseOver={eventHandleWrapper(onMouseOver, data, this)}
           scales={scales}
           style={style}
+          transform={'translate(0, 0)'}
         />
       );
     }
