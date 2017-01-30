@@ -17,7 +17,7 @@ export default class Animation {
       [
         'getTimer',
         'YAxisAnimate',
-        'MultiShapeAnimate',
+        'XAxisAnimate',
       ]
     );
     this.timer = null;
