@@ -16,9 +16,17 @@ export default class PathAnimate extends PureComponent {
       nextFrameTransform: this.props.transform,
       nextFrameYScaleDomain: this.props.scales.y.domain(),
       nextFrameXScaleDomain: this.props.scales.x.domain(),
+      okToRender: false,
     };
 
     this.frameCallback = this.frameCallback.bind(this);
+    this.initialFrameCallback = this.initialFrameCallback.bind(this);
+  }
+
+  componentWillMount() {
+    const timer = this.props.animate.timer;
+    this.loopId = timer
+      .subscribe(this.initialFrameCallback(), this.props.animate.duration || 500);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -72,6 +80,21 @@ export default class PathAnimate extends PureComponent {
       .subscribe(this.frameCallback(interpolator), this.props.animate.duration || 500);
   }
 
+  componentWillUnmount() {
+    this.timer.unsubscribe(this.loopId);
+  }
+
+  initialFrameCallback() {
+    return (elapsed, duration) => {
+      const t = elapsed / duration;
+
+      if (t > 1) {
+        this.setState({ okToRender: true });
+        this.timer.unsubscribe(this.loopId);
+      }
+    };
+  }
+
   frameCallback(interpolator) {
     return (elapsed, duration) => {
       let t = elapsed / duration;
@@ -88,7 +111,6 @@ export default class PathAnimate extends PureComponent {
   }
 
   render() {
-    console.log('animate-path render');
     const props = assign(
       {},
       this.props,
@@ -105,6 +127,8 @@ export default class PathAnimate extends PureComponent {
         },
       }
     );
+
+    if (!this.state.okToRender) return null;
 
     return (
       <path
