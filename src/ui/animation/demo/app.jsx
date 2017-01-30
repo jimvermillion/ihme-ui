@@ -281,6 +281,7 @@ class App extends React.Component {
           fieldAccessors={fieldAccessors}
           dataAccessors={dataAccessors}
           onClick={()=>{console.log('click')}}
+          style={{ fillOpacity: 0.5 }}
           symbolField="stage_id"
           symbolScale={symbolScale}
         />
