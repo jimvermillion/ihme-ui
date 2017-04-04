@@ -45,7 +45,8 @@
     "travis-test": "npm run lint && npm run coverage:travis && npm run coverage-token",
     "preversion": "npm run lint && npm run test",
     "version": "npm run build:all && git add .",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags",
+    "webpack:aster": "./node_modules/.bin/webpack --config src/ui/aster-chart/demo/webpack.config.js --watch"
   },
   "devDependencies": {
     "autoprefixer": "^6.3.3",
