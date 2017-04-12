@@ -31,6 +31,7 @@ export {
 } from './geo';
 
 export {
+  Float,
   numberFormat,
 } from './numbers';
 
@@ -67,9 +68,9 @@ export {
 } from './props';
 
 export {
-  getSymbol,
-  symbolTypes,
-} from './symbol';
+  getShape,
+  shapeTypes,
+} from './shape';
 
 export {
   getBackgroundColor,

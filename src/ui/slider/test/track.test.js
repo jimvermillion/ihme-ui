@@ -6,7 +6,7 @@ import sinon from 'sinon';
 import interact from 'interact.js';
 
 import Track from '../src/track';
-import style from '../src/style.css';
+import style from '../src/slider.css';
 
 chai.use(chaiEnzyme());
 
@@ -19,7 +19,7 @@ describe('<Track />', () => {
     );
 
     expect(wrapper).to.have.className(style.track);
-    expect(wrapper.find('div').last()).to.have.className(style['track-click-target']);
+    expect(wrapper.find('button').last()).to.have.className(style['track-click-target']);
     expect(wrapper.children()).to.have.length(1);
   });
 

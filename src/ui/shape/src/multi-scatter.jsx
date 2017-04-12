@@ -5,6 +5,11 @@ import Scatter from './scatter';
 
 import { propResolver, PureComponent, CommonDefaultProps, CommonPropTypes } from '../../../utils';
 
+/**
+ * `import { MultiScatter } from 'ihme-ui'`
+ *
+ * This is a convenience component intended to make it easier to render many `<Scatter />`s on a single chart.
+ */
 export default class MultiScatter extends PureComponent {
   render() {
     const {
@@ -17,15 +22,15 @@ export default class MultiScatter extends PureComponent {
       scatterValuesIteratee,
       selection,
       style,
-      symbolScale,
-      symbolStyle,
+      shapeScale,
+      shapeStyle,
     } = this.props;
 
     const {
       color: colorField,
       data: dataField,
       key: keyField,
-      symbol: symbolField,
+      shape: shapeField,
     } = fieldAccessors;
 
     const childProps = pick(this.props, [
@@ -42,8 +47,8 @@ export default class MultiScatter extends PureComponent {
       'selectedStyle',
       'scales',
       'size',
-      'symbolClassName',
-      'symbolScale',
+      'shapeClassName',
+      'shapeScale',
     ]);
 
     return (
@@ -59,7 +64,7 @@ export default class MultiScatter extends PureComponent {
 
             const color = colorScale(colorField ? propResolver(datum, colorField) : key);
 
-            const symbolType = symbolField && symbolScale(propResolver(datum, symbolField));
+            const shapeType = shapeField && shapeScale(propResolver(datum, shapeField));
 
             const scatterValues = scatterValuesIteratee(values, key);
 
@@ -70,8 +75,8 @@ export default class MultiScatter extends PureComponent {
                 fill={color}
                 key={`scatter:${key}`}
                 selection={castArray(selection)}
-                style={symbolStyle}
-                symbolType={symbolType}
+                style={shapeStyle}
+                shapeType={shapeType}
                 {...childProps}
               />
             ) : null;
@@ -83,117 +88,172 @@ export default class MultiScatter extends PureComponent {
 }
 
 MultiScatter.propTypes = {
-  /* base classname to apply to mult-scatter <g> wrapper */
+  /**
+   * className applied to outermost wrapping `<g>`.
+   */
   className: CommonPropTypes.className,
 
-  /* string id url for clip path */
+  /**
+   * If a clip path is applied to a container element (e.g., an `<AxisChart />`),
+   * clip all children of `<MultiScatter />` to that container by passing in the clip path URL id.
+   */
   clipPathId: PropTypes.string,
 
-  /* function for a scale of colors. If present, overrides fill */
+  /**
+   * If provided and `dataAccessors.fill` is undefined, determines the color of scatter shapes.
+   */
   colorScale: PropTypes.func,
 
-  /* array of datum objects */
+  /**
+   *  Array of objects, e.g. [ {location: 'USA',values: []}, {location: 'Canada', values: []} ].
+   */
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
 
-  /*
-   accessors on datum objects
-     fill: property on data to provide fill (will be passed to colorScale)
-     x: property on data to position in x-direction
-     y: property on data to position in y-direction
+  /**
+   * Accessors on datum objects
+   *   fill: property on datum to provide fill (will be passed to `props.colorScale`)
+   *   key: unique dimension of datum (required)
+   *   shape: property on datum used to determine which type of shape to render (will be passed to `props.shapeScale`)
+   *   x: property on datum to position scatter shapes in x-direction
+   *   y: property on datum to position scatter shapes in y-direction
+   *
+   * Each accessor can either be a string or function. If a string, it is assumed to be the name of a
+   * property on datum objects; full paths to nested properties are supported (e.g., { `x`: 'values.year', ... }).
+   * If a function, it is passed datum objects as its first and only argument.
    */
   dataAccessors: PropTypes.shape({
     fill: CommonPropTypes.dataAccessor,
     key: CommonPropTypes.dataAccessor,
-    symbol: CommonPropTypes.dataAccessor,
+    shape: CommonPropTypes.dataAccessor,
     x: CommonPropTypes.dataAccessor,
     y: CommonPropTypes.dataAccessor,
   }).isRequired,
 
-  /*
-   key names containing fields for child component configuration
-     color -> (optional) color data as input to color scale.
-     data -> data provided to child components. default: 'values'
-     key -> unique key to apply to child components. used as input to color scale if color field is not specified. default: 'key'
-     symbol -> symbol data as input to the symbol scale.
+  /**
+   * Accessors for objects within `props.data`
+   *   color: (optional) color data as input to color scale.
+   *   data: data provided to child components. default: 'values'
+   *   key: unique key to apply to child components. used as input to color scale if color field is not specified. default: 'key'
+   *   shape: shape data as input to the shape scale.
    */
   fieldAccessors: PropTypes.shape({
     color: CommonPropTypes.dataAccessor,
     data: CommonPropTypes.dataAccessor.isRequired,
     key: CommonPropTypes.dataAccessor.isRequired,
-    symbol: CommonPropTypes.dataAccessor,
+    shape: CommonPropTypes.dataAccessor,
   }),
 
-  /* the symbol to focus */
+  /**
+   * The datum object corresponding to the `<Shape />` currently focused.
+   */
   focus: PropTypes.object,
 
-  /* classname to be applied if symbol has focus */
+  /**
+   * className applied if `<Shape />` has focus.
+   */
   focusedClassName: CommonPropTypes.className,
 
-  /*
-   inline-style object or function to be applied if symbol has focus;
-   if a function, is called with datum
-   can override style and selectedStyle
+  /**
+   * Inline styles applied to focused `<Shape />`.
+   * If an object, spread into inline styles.
+   * If a function, passed underlying datum corresponding to its `<Shape />`,
+   * and return value is spread into inline styles;
+   * signature: (datum) => obj
    */
   focusedStyle: CommonPropTypes.style,
 
-  /* mouse events signature: function(event, data, instance) {...} */
+  /**
+   * onClick callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onClick: PropTypes.func,
+
+  /**
+   * onMouseLeave callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onMouseLeave: PropTypes.func,
+
+  /**
+   * onMouseMove callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onMouseMove: PropTypes.func,
+
+  /**
+   * onMouseOver callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onMouseOver: PropTypes.func,
 
-  /* scales */
+  /**
+   * `x` and `y` scales for positioning `<Shape />`s.
+   * Object with keys: `x`, and `y`.
+   */
   scales: PropTypes.shape({
     x: PropTypes.func,
     y: PropTypes.func,
   }).isRequired,
 
-  /*
-   classname to apply to Scatter's <g> wrapper;
-   named 'scatterClassName' to disambiguate 'className' prop passed to Symbol
+  /**
+   * className applied to `<Scatter />`'s outermost wrapping `<g>`.
    */
   scatterClassName: CommonPropTypes.className,
 
-  /*
-   function to apply to the datum to transform scatter values. default: _.identity
-   @param values
-   @param key
-   @return transformed data (or undefined)
+  /**
+   * function to apply to the datum to transform scatter values. default: _.identity
+   * signature: (data, key) => {...}
    */
   scatterValuesIteratee: PropTypes.func,
 
-  /* classname to be applied to Symbol if selected */
+  /**
+   * className applied to `<Shape />`s if selected
+   */
   selectedClassName: CommonPropTypes.className,
 
-  /*
-   inline-style object or function to be applied if symbol is selected;
-   if a function, is called with datum
-   can override style
+  /**
+   * inline styles applied to selected `<Shape />`s.
+   * If an object, spread into inline styles.
+   * If a function, passed underlying datum corresponding to its `<Shape />`,
+   * and return value is spread into inline styles;
+   * signature: (datum) => obj
    */
   selectedStyle: CommonPropTypes.style,
 
-  /* a symbol that is selected, or an array of symbols selected */
+  /**
+   * Datum object or array of datum objects corresponding to selected `<Shape />`s
+   */
   selection: PropTypes.oneOfType([
     PropTypes.object,
     PropTypes.array,
   ]),
 
-  /* size of symbols; see Symbol.propTypes */
+  /**
+   * Size of `<Shape />`s; area in square pixels.
+   * If not provided, `<Shape />` provides a default of 64 (8px x 8px).
+   */
   size: PropTypes.number,
 
-  style: CommonPropTypes.style,
-
-  /* base classname to apply to symbol */
-  symbolClassName: CommonPropTypes.className,
-
-  /* function to transform symbol value to a shape */
-  symbolScale: PropTypes.func,
-
-  /*
-   inline-style object or function to be applied as base style for Symbols;
-   if a function, is called with associated datum
+  /**
+   * inline style applied to outermost wrapping `<g>`
    */
-  symbolStyle: CommonPropTypes.style,
+  style: PropTypes.object,
+
+  /**
+   * className applied to each `<Shape />`
+   */
+  shapeClassName: CommonPropTypes.className,
+
+  /**
+   * If provided, used in conjunction with `dataAccessors.shape` (or `dataAccessors.key` if not provided)
+   * to determine type of shape to render
+   */
+  shapeScale: PropTypes.func,
+
+  /**
+   * Inline styles applied to `<Shape />`s.
+   */
+  shapeStyle: CommonPropTypes.style,
 };
 
 MultiScatter.defaultProps = {
@@ -204,6 +264,6 @@ MultiScatter.defaultProps = {
   },
   scatterValuesIteratee: CommonDefaultProps.identity,
   size: 64,
-  symbolField: 'type',
-  symbolScale() { return 'circle'; },
+  shapeField: 'type',
+  shapeScale() { return 'circle'; },
 };

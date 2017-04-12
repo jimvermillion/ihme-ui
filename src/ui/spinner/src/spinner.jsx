@@ -1,19 +1,25 @@
 import React, { PropTypes } from 'react';
 import classNames from 'classnames';
-import { Symbol } from '../../shape';
+import { Shape } from '../../shape';
 import { CommonPropTypes, PureComponent } from '../../../utils';
 
 import styles from './spinner.css';
 
+/**
+ * `import { Spinner } from 'ihme-ui'`
+ *
+ *
+ * Yet another loading indicator. But don't be fooled! This one doesn't actually spin.
+ */
 class Spinner extends PureComponent {
   render() {
     const {
       className,
       inline,
       style,
-      symbolFill,
-      symbolStyle,
-      symbolType,
+      shapeFill,
+      shapeStyle,
+      shapeType,
     } = this.props;
 
     return (
@@ -24,13 +30,13 @@ class Spinner extends PureComponent {
         style={style}
       >
         <svg className={styles.dot} viewBox="-8 -8 16 16" width="1em" height="1em">
-          <Symbol fill={symbolFill} style={symbolStyle} symbolType={symbolType} />
+          <Shape fill={shapeFill} style={shapeStyle} shapeType={shapeType} />
         </svg>
         <svg className={styles.dot} viewBox="-8 -8 16 16" width="1em" height="1em">
-          <Symbol fill={symbolFill} style={symbolStyle} symbolType={symbolType} />
+          <Shape fill={shapeFill} style={shapeStyle} shapeType={shapeType} />
         </svg>
         <svg className={styles.dot} viewBox="-8 -8 16 16" width="1em" height="1em">
-          <Symbol fill={symbolFill} style={symbolStyle} symbolType={symbolType} />
+          <Shape fill={shapeFill} style={shapeStyle} shapeType={shapeType} />
         </svg>
       </div>
     );
@@ -38,22 +44,41 @@ class Spinner extends PureComponent {
 }
 
 Spinner.propTypes = {
-  /* an extra classname */
+  /**
+   * Class name applied to outermost wrapping `<div>`.
+   */
   className: CommonPropTypes.className,
 
-  /* display spinner inline with other elements (e.g., in a button) */
+  /**
+   * Display inline with other elements (e.g., in a button).
+   */
   inline: PropTypes.bool,
 
+  /**
+   * Inline styles applied to outermost wrapping `<div>`.
+   */
   style: CommonPropTypes.style,
 
-  symbolFill: PropTypes.string,
-  symbolStyle: CommonPropTypes.style,
-  symbolType: PropTypes.string,
+  /**
+   * Fill color of loading shape.
+   */
+  shapeFill: PropTypes.string,
+
+  /**
+   * Inline styles applied to loading shape.
+   */
+  shapeStyle: CommonPropTypes.style,
+
+  /**
+   * Type of loading shape to render.
+   * One of: 'circle', 'cross', 'diamond', 'square', 'star', 'triangle', 'wye'
+   */
+  shapeType: PropTypes.string,
 };
 
 Spinner.defaultProps = {
-  symbolFill: 'black',
-  symbolType: 'circle',
+  shapeFill: 'black',
+  shapeType: 'circle',
 };
 
 export default Spinner;

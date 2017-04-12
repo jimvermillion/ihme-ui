@@ -18,8 +18,11 @@ import {
   stateFromPropUpdates,
 } from '../../../utils';
 
-import Symbol from './symbol';
+import Shape from './shape';
 
+/**
+ * `import { Scatter } from 'ihme-ui'`
+ */
 export default class Scatter extends PureComponent {
   constructor(props) {
     super(props);
@@ -39,9 +42,9 @@ export default class Scatter extends PureComponent {
       fill,
       focus,
       scales,
-      symbolClassName,
-      symbolScale,
-      symbolType,
+      shapeClassName,
+      shapeScale,
+      shapeType,
     } = this.props;
 
     const { selectedDataMappedToKeys, sortedData } = this.state;
@@ -73,22 +76,22 @@ export default class Scatter extends PureComponent {
 
             const focusedDatumKey = focus ? propResolver(focus, dataAccessors.key) : null;
 
-            const resolvedSymbolType = dataAccessors.symbol ?
-              symbolScale(propResolver(datum, dataAccessors.symbol)) :
-              symbolType;
+            const resolvedShapeType = dataAccessors.shape ?
+              shapeScale(propResolver(datum, dataAccessors.shape)) :
+              shapeType;
 
             const xValue = propResolver(datum, dataAccessors.x);
             const yValue = propResolver(datum, dataAccessors.y);
 
             return (
-              <Symbol
-                className={symbolClassName}
+              <Shape
+                className={shapeClassName}
                 key={key}
                 datum={datum}
                 fill={colorScale && isFinite(fillValue) ? colorScale(fillValue) : fill}
                 focused={focusedDatumKey === key}
                 selected={selectedDataMappedToKeys.hasOwnProperty(key)}
-                symbolType={resolvedSymbolType}
+                shapeType={resolvedShapeType}
                 translateX={scales.x && isFinite(xValue) ? scales.x(xValue) : 0}
                 translateY={scales.y && isFinite(yValue) ? scales.y(yValue) : 0}
                 {...childProps}
@@ -102,67 +105,141 @@ export default class Scatter extends PureComponent {
 }
 
 Scatter.propTypes = {
-  /* base classname to apply to scatter <g> wrapper */
+  /**
+   * className applied to outermost wrapping `<g>`.
+   */
   className: CommonPropTypes.className,
 
-  /* string id url for clip path */
+  /**
+   * If a clip path is applied to a container element (e.g., an `<AxisChart />`),
+   * clip all children of `<Scatter />` to that container by passing in the clip path URL id.
+   */
   clipPathId: PropTypes.string,
 
-  /* function for a scale of colors. If present, overrides fill */
+  /**
+   * If provided will determine color of rendered `<Shape />`s
+   */
   colorScale: PropTypes.func,
 
-  /* array of datum objects */
+  /**
+   * Array of datum objects
+   */
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
 
-  /*
-    accessors on datum objects; each should be either
-    a property on datum objects or function which accepts that datum object
-      fill: property on datum to provide fill (will be passed to colorScale)
-      key: unique dimension of datum (required)
-      x: property on data to position in x-direction
-      y: property on data to position in y-direction
-  */
+  /**
+   * Accessors on datum objects
+   *   fill: property on datum to provide fill (will be passed to `props.colorScale`)
+   *   key: unique dimension of datum (required)
+   *   shape: property on datum used to determine which type of shape to render (will be passed to `props.shapeScale`)
+   *   x: property on datum to position scatter shapes in x-direction
+   *   y: property on datum to position scatter shapes in y-direction
+   *
+   * Each accessor can either be a string or function. If a string, it is assumed to be the name of a
+   * property on datum objects; full paths to nested properties are supported (e.g., { `x`: 'values.year', ... }).
+   * If a function, it is passed datum objects as its first and only argument.
+   */
   dataAccessors: PropTypes.shape({
     fill: CommonPropTypes.dataAccessor,
-    key: CommonPropTypes.dataAccessor,
-    symbol: CommonPropTypes.dataAccessor,
+    key: CommonPropTypes.dataAccessor.isRequired,
+    shape: CommonPropTypes.dataAccessor,
     x: CommonPropTypes.dataAccessor,
     y: CommonPropTypes.dataAccessor,
   }).isRequired,
 
-  /* string for the color of this data group */
+  /**
+   * If `props.colorScale` is undefined, each `<Shape />` will be given this same fill value.
+   */
   fill: PropTypes.string,
 
-  /* the symbol to focus */
+  /**
+   * The datum object corresponding to the `<Shape />` currently focused.
+   */
   focus: PropTypes.object,
 
-  /* mouse events signature: function(event, data, instance) {...} */
+  /**
+   * className applied if `<Shape />` has focus.
+   */
+  focusedClassName: CommonPropTypes.className,
+
+  /**
+   * inline styles applied to focused `<Shape />`
+   * If an object, spread into inline styles.
+   * If a function, passed underlying datum corresponding to its `<Shape />`,
+   * and return value is spread into inline styles;
+   * signature: (datum) => obj
+   */
+  focusedStyle: CommonPropTypes.style,
+
+  /**
+   * onClick callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onClick: PropTypes.func,
+
+  /**
+   * onMouseLeave callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onMouseLeave: PropTypes.func,
+
+  /**
+   * onMouseMove callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onMouseMove: PropTypes.func,
+
+  /**
+   * onMouseOver callback.
+   * signature: (SyntheticEvent, datum, instance) => {...}
+   */
   onMouseOver: PropTypes.func,
 
-  /* scales */
+  /**
+   * `x` and `y` scales for positioning `<Shape />`s.
+   * Object with keys: `x`, and `y`.
+   */
   scales: PropTypes.shape({
     x: PropTypes.func,
     y: PropTypes.func,
   }).isRequired,
 
-  /* a symbol that is selected, or an array of symbols selected */
+  /**
+   * className applied to `<Shape />`s if selected
+   */
+  selectedClassName: CommonPropTypes.className,
+
+  /**
+   * Array of datum objects corresponding to selected `<Shape />`s
+   */
   selection: PropTypes.array,
 
-  /* size of symbols; see Symbol.propTypes */
+  /**
+   * Size of `<Shape />`s; area in square pixels.
+   * If not provided, `<Shape />` provides a default of 64 (8px x 8px).
+   */
   size: PropTypes.number,
 
+  /**
+   * Inline styles passed to each `<Shape />`
+   */
   style: CommonPropTypes.style,
 
-  /* base classname to apply to symbol */
-  symbolClassName: CommonPropTypes.className,
+  /**
+   * className applied to each `<Shape />`
+   */
+  shapeClassName: CommonPropTypes.className,
 
-  symbolScale: PropTypes.func,
+  /**
+   * If provided, used in conjunction with `dataAccessors.shape` (or `dataAccessors.key` if not provided)
+   * to determine type of shape to render
+   */
+  shapeScale: PropTypes.func,
 
-  /* string for the type of symbol to be used */
-  symbolType: PropTypes.string,
+  /**
+   * Type of shape to render; use in lieu of `props.shapeScale`
+   * if you want all `<Shape />` to be of the same type.
+   */
+  shapeType: PropTypes.string,
 };
 
 Scatter.defaultProps = {
@@ -172,7 +249,7 @@ Scatter.defaultProps = {
   onMouseMove: CommonDefaultProps.noop,
   onMouseOver: CommonDefaultProps.noop,
   size: 64,
-  symbolType: 'circle',
+  shapeType: 'circle',
 };
 
 Scatter.propUpdates = {

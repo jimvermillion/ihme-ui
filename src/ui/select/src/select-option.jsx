@@ -1,6 +1,6 @@
 import React, { PropTypes } from 'react';
 import classNames from 'classnames';
-import { bindAll } from 'lodash';
+import { bindAll, includes } from 'lodash';
 
 import { propsChanged } from '../../../utils';
 
@@ -98,7 +98,8 @@ export default class SelectOption extends React.Component {
     } = this.state;
 
     const isFocused = option === focusedOption;
-    const isSelected = valueArray ? valueArray.includes(option) : false;
+    const isSelected = includes(valueArray, option);
+    const isDisabled = Boolean(option.disabled);
 
     return (
       <div
@@ -106,10 +107,11 @@ export default class SelectOption extends React.Component {
           styles.option, {
             [styles.focused]: isFocused,
             [styles.selected]: isSelected,
+            [styles.disabled]: isDisabled,
           }
         )}
-        onClick={this.onClick}
-        onMouseOver={this.onMouseOver}
+        onClick={!isDisabled && this.onClick}
+        onMouseOver={!isDisabled && this.onMouseOver}
         style={style}
       >
         {

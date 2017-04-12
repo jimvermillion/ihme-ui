@@ -7,7 +7,7 @@ import identity from 'lodash/identity';
 import inRange from 'lodash/inRange';
 import map from 'lodash/map';
 import noop from 'lodash/noop';
-import range from 'lodash/range';
+import range_ from 'lodash/range';
 import reduce from 'lodash/reduce';
 import round from 'lodash/round';
 import zipObject from 'lodash/zipObject';
@@ -17,8 +17,7 @@ import { stateFromPropUpdates, updateFunc } from '../../../utils/props';
 import Track from './track';
 import Fill from './fill';
 import Handle from './handle';
-import ResponsiveContainer from '../../responsive-container';
-import style from './style.css';
+import styles from './slider.css';
 
 const VALUE_KEYS = ['low', 'high'];
 
@@ -35,8 +34,9 @@ function getIndexesForValues(values, rangeList) {
     const index = rangeList.indexOf(value);
     return {
       ...acc,
-      [key]: index !== -1 ?
-               index : key === 'low' ? 0 : rangeList.length - 1,
+      [key]: index !== -1
+        ? index : key === 'low'
+          ? 0 : rangeList.length - 1,
     };
     /* eslint-enable no-nested-ternary */
   }, {});
@@ -49,12 +49,7 @@ function getIndexesForValues(values, rangeList) {
  * @return {Object}
  */
 function getValuesForIndexes(indexes, rangeList) {
-  return reduce(indexes, (acc, value, key) => {
-    return {
-      ...acc,
-      [key]: rangeList[value],
-    };
-  }, {});
+  return reduce(indexes, (acc, value, key) => ({ ...acc, [key]: rangeList[value] }), {});
 }
 
 /**
@@ -74,6 +69,9 @@ function getLowHighValues(value) {
   return { low: value };
 }
 
+/**
+ * `import { Slider } from 'ihme-ui'`
+ */
 export default class Slider extends PureComponent {
   constructor(props) {
     super(props);
@@ -87,12 +85,12 @@ export default class Slider extends PureComponent {
     this.handleCount = Object.keys(this.state.indexes).length;
 
     bindAll(this, [
+      'doSetState',
       'onHandleEnd',
       'onHandleDrag',
       'onHandleKeyDown',
       'onTrackClick',
       'trackRef',
-      'doSetState',
     ]);
   }
 
@@ -136,8 +134,8 @@ export default class Slider extends PureComponent {
 
       // Check that the mouse X pos is within the handle extent,
       // and that the computed value is in the range list
-      if (!inRange(pageX - handleExtent, nextPos - handleExtent) ||
-            !this.state.range[index]) return;
+      if (!inRange(pageX - handleExtent, nextPos - handleExtent)
+        || !this.state.range[index]) return;
 
       this.updateValueFromEvent(event, index, key, this.props.onDrag);
     };
@@ -147,10 +145,10 @@ export default class Slider extends PureComponent {
     return (event) => {
       let step;
       switch (event.keyCode) {
-        case 37:
+        case 37: // ArrowLeft
           step = -1;
           break;
-        case 39:
+        case 39: // ArrowRight
           step = 1;
           break;
         default:
@@ -178,8 +176,8 @@ export default class Slider extends PureComponent {
     const index = round(scale.invert(event.snap.x));
 
     /* Determine which handle is closer. 'low' == true, 'high' == false */
-    const comp = indexes.high === undefined ||
-      (Math.abs(indexes.low - index) < Math.abs(indexes.high - index) || indexes.low > index);
+    const comp = indexes.high === undefined
+      || (Math.abs(indexes.low - index) < Math.abs(indexes.high - index) || indexes.low > index);
 
     const key = comp ? 'low' : 'high';
 
@@ -191,9 +189,9 @@ export default class Slider extends PureComponent {
       const indexes = { ...this.state.indexes, [key]: index };
       const values = getValuesForIndexes(indexes, this.state.range);
 
-      if (indexes.low === undefined ||
-            indexes.high === undefined ||
-            indexes.low <= indexes.high) {
+      if (indexes.low === undefined
+        || indexes.high === undefined
+        || indexes.low <= indexes.high) {
         callback(event, values, this);
       }
     }
@@ -219,18 +217,18 @@ export default class Slider extends PureComponent {
   renderFill() {
     if (!this.state.render || !this.props.fill) return null;
 
-    const { indexes, scale } = this.state;
     const { fillStyle, fillClassName } = this.props;
+    const { indexes, scale } = this.state;
 
     return map(indexes, (index, key) => {
       const direction = key === 'low' ? 'left' : 'right';
       const position = scale(index);
       return (
         <Fill
-          key={`fill:${key}`}
           className={fillClassName}
-          style={fillStyle}
           direction={direction}
+          key={`fill:${key}`}
+          style={fillStyle}
           width={position}
         />
       );
@@ -240,35 +238,40 @@ export default class Slider extends PureComponent {
   renderHandles() {
     if (!this.state.render) return null;
 
-    const { indexes, scale, snapTarget } = this.state;
-    const { labelFunc, handleClassName, handleStyle } = this.props;
+    const {
+      disabled,
+      handleClassName,
+      handleStyle,
+      labelFunc,
+      onDragEnd,
+      onKeyEnd,
+    } = this.props;
+    const { indexes, range, scale, snapTarget } = this.state;
 
     return (
-      <div className={style['handle-track']}>
-        <div className={style['flag-base']}></div>
+      <div className={styles['handle-track']}>
+        <div className={styles['flag-base']}></div>
         {map(indexes, (index, key) => {
           const direction = key === 'low' ? 'left' : 'right';
           const position = scale(index);
           return (
-            <ResponsiveContainer
+            <Handle
+              className={classNames(handleClassName,
+                { [styles.connected]: indexes.low === indexes.high })}
+              direction={direction}
+              disabled={disabled}
               key={`handle:${key}`}
-            >
-              <Handle
-                className={classNames(handleClassName,
-                                      { [style.connected]: indexes.low === indexes.high })}
-                style={handleStyle}
-                onDrag={this.onHandleDrag}
-                onDragEnd={this.onHandleEnd(this.props.onDragEnd)}
-                onKeyDown={this.onHandleKeyDown}
-                onKeyUp={this.onHandleEnd(this.props.onKeyEnd)}
-                name={key}
-                direction={direction}
-                position={position}
-                label={this.state.range[index]}
-                labelFunc={labelFunc}
-                snapTarget={snapTarget}
-              />
-            </ResponsiveContainer>
+              label={range[index]}
+              labelFunc={labelFunc}
+              name={key}
+              onDrag={this.onHandleDrag}
+              onDragEnd={this.onHandleEnd(onDragEnd)}
+              onKeyDown={this.onHandleKeyDown}
+              onKeyUp={this.onHandleEnd(onKeyEnd)}
+              position={position}
+              snapTarget={snapTarget}
+              style={handleStyle}
+            />
           );
         })}
       </div>
@@ -276,32 +279,46 @@ export default class Slider extends PureComponent {
   }
 
   render() {
-    const { fontSize, width, wrapperClassName, wrapperStyle, ticks } = this.props;
+    const {
+      className,
+      disabled,
+      fontSize,
+      style,
+      tickClassName,
+      tickStyle,
+      ticks,
+      ticksClassName,
+      ticksStyle,
+      trackClassName,
+      trackStyle,
+      width,
+    } = this.props;
     const { snapTarget } = this.state;
 
     const wrapperStyles = {
       fontSize: `${fontSize}`,
       width: `${width}px`,
-      ...wrapperStyle,
+      ...style,
     };
 
     return (
       <div
-        className={classNames(style.slider, wrapperClassName)}
+        className={classNames(styles.slider, className)}
         style={wrapperStyles}
       >
         {this.renderHandles()}
         <Track
-          ref={this.trackRef}
-          className={this.props.trackClassName}
-          style={this.props.trackStyle}
+          className={trackClassName}
+          disabled={disabled}
           onClick={this.onTrackClick}
+          ref={this.trackRef}
           snapTarget={snapTarget}
+          style={trackStyle}
+          tickClassName={tickClassName}
+          tickStyle={tickStyle}
           ticks={ticks}
-          ticksClassName={this.props.ticksClassName}
-          ticksStyle={this.props.ticksStyle}
-          tickClassName={this.props.tickClassName}
-          tickStyle={this.props.tickStyle}
+          ticksClassName={ticksClassName}
+          ticksStyle={ticksStyle}
         >
           {this.renderFill()}
         </Track>
@@ -311,44 +328,102 @@ export default class Slider extends PureComponent {
 }
 
 Slider.propTypes = {
-  /* include fill in the track to indicate value. */
+  /**
+   * Disable slider visually and functionally.
+   */
+  disabled: PropTypes.bool,
+
+  /**
+   * Include fill in the track to indicate value.
+   */
   fill: PropTypes.bool,
+
+  /**
+   * Class name applied to fill.
+   */
   fillClassName: CommonPropTypes.className,
+
+  /**
+   * Inline styles applied to fill.
+   */
   fillStyle: PropTypes.object,
 
+  /**
+   * Font size of handle labels.
+   */
   fontSize: PropTypes.string,
 
+  /**
+   * Class name applied to slider handle.
+   */
   handleClassName: CommonPropTypes.className,
+
+  /**
+   * Inline styles applied to slider handle.
+   */
   handleStyle: PropTypes.object,
 
-  /*
-   * function applied to the selected value prior to rendering.
-   * Params:
-   *   value - selected value
-   *
-   * Returns:
-   *   'string'
-   *
-   * Default:
-   *   _.identity
+  /**
+   * Function applied to label prior to rendering.
+   * Signature: (value): string => {...}
    */
   labelFunc: PropTypes.func,
 
-  /*
-   * callback functions when value is changed.
-   * @param {Object} event - triggered the action
-   * @param {Object} value - low and high values
-   * @param {Object} Slider - the slider object itself
+  /**
+   * [dragmove](http://interactjs.io/docs/#interactevents) callback.
+   * Called when slider value is changed.
+   * Signature: (SyntheticEvent, values, Slider) => {...}
+   *  - {Object} SyntheticEvent - the triggered action
+   *  - {Object} values - { high: ..., low: ... }
+   *  - {Object} Slider - the slider object (class instance)
    */
   onDrag: PropTypes.func.isRequired,
+
+  /**
+   * [dragend](http://interactjs.io/docs/#interactevents) callback.
+   * Called when slider handle is released.
+   * Signature: (SyntheticEvent, values, Slider) => {...}
+   *  - {Object} SyntheticEvent - the triggered action
+   *  - {Object} values - { high: ..., low: ... }
+   *  - {Object} Slider - the slider object (class instance)
+   */
   onDragEnd: PropTypes.func,
 
+  /**
+   * onKeyDown callback. Named for consistency with onDrag and onDragEnd.
+   * Signature: (SyntheticEvent, values, Slider) => {...}
+   *  - {Object} SyntheticEvent - the triggered action
+   *  - {Object} values - { high: ..., low: ... }
+   *  - {Object} Slider - the slider object (class instance)
+   */
   onKey: PropTypes.func,
+
+  /**
+   * onKeyUp callback. Named for consistency with onDrag and onDragEnd.
+   * Signature: (SyntheticEvent, values, Slider) => {...}
+   *  - {Object} SyntheticEvent - the triggered action
+   *  - {Object} values - { high: ..., low: ... }
+   *  - {Object} Slider - the slider object (class instance)
+   */
   onKeyEnd: PropTypes.func,
 
+  /**
+   * onClick callback for slider track.
+   * Signature: (SyntheticEvent, values, Slider) => {...}
+   *  - {Object} SyntheticEvent - the triggered action
+   *  - {Object} values - { high: ..., low: ... }
+   *  - {Object} Slider - the slider object (class instance)
+   */
   onTrackClick: PropTypes.func,
 
-  /* extents of slider values. */
+  /**
+   *  Extent of slider values. Can be either an array of [min, max] or a configuration object.
+   *  Config:
+   *    - low: min value
+   *    - high: max value
+   *    - steps: number of steps between low and high
+   *    - precision: rounding precision
+   */
   range: PropTypes.oneOfType([
     PropTypes.array,
     PropTypes.shape({
@@ -359,22 +434,35 @@ Slider.propTypes = {
     }),
   ]).isRequired,
 
-  /* class name and style for each tick */
+  /**
+   * Show ticks in track.
+   */
+  ticks: PropTypes.bool,
+
+  /**
+   * Class name applied to each tick marking within the track, if applicable.
+   */
   tickClassName: CommonPropTypes.className,
+
+  /**
+   * Inline styles applied to each tick marking within the track, if applicable.
+   */
   tickStyle: PropTypes.object,
 
-  /* show ticks in track */
-  ticks: PropTypes.bool,
-  ticksClassName: CommonPropTypes.className,
-  ticksStyle: PropTypes.object,
-
+  /**
+   * Class name applied to slider track.
+   */
   trackClassName: CommonPropTypes.className,
+
+  /**
+   * Inline styles applied to slider track.
+   */
   trackStyle: PropTypes.object,
 
-  /*
-   * Initial selected value.
+  /**
+   * Selected value.
    * If number, a single slider handle will be rendered.
-   * If object with keys 'low' and 'high', two slider handles will be rendered.
+   * If object with keys 'low' and 'high', two slider handles (a "range slider") will be rendered.
    */
   value: PropTypes.oneOfType([
     PropTypes.number,
@@ -386,15 +474,24 @@ Slider.propTypes = {
     }),
   ]).isRequired,
 
-  /* width and height of Slider component. */
+  /**
+   * Width of slider (in pixels).
+   */
   width: PropTypes.number,
 
-  /* class name styles applied to outermost wrapper */
-  wrapperClassName: CommonPropTypes.className,
-  wrapperStyle: PropTypes.object,
+  /**
+   * Class name applied to outermost wrapper.
+   */
+  className: CommonPropTypes.className,
+
+  /**
+   * Inline styles applied to outermost wrapper.
+   */
+  style: PropTypes.object,
 };
 
 Slider.defaultProps = {
+  disabled: false,
   labelFunc: identity,
   onDrag: noop,
   onDragEnd: noop,
@@ -412,9 +509,8 @@ Slider.propUpdates = {
     if (!Array.isArray(nextProp)) {
       const delta = nextProp.high - nextProp.low;
       const steps = nextProp.steps || delta + 1;
-      nextRange = range(steps).map(
-        (d) => round(d * delta / (steps - 1) + nextProp.low, nextProp.precision)
-      );
+      nextRange = range_(steps).map((d) =>
+        round(d * delta / (steps - 1) + nextProp.low, nextProp.precision));
     }
 
     return {
@@ -422,11 +518,8 @@ Slider.propUpdates = {
       scale: state.scale.domain([0, nextRange.length - 1]),
     };
   }),
-  value: updateFunc((nextProp, propName, nextProps, state) => {
-    return { indexes: getIndexesForValues(getLowHighValues(nextProp), state.range) };
-  }),
-  width: updateFunc(() => {
-    // Track needs to be rendered with new width before Handles and Fill can be rendered
-    return { render: false };
-  }),
+  value: updateFunc((nextProp, propName, nextProps, state) =>
+    ({ indexes: getIndexesForValues(getLowHighValues(nextProp), state.range) })),
+  width: updateFunc(() =>
+    ({ render: false })), // Track needs to be rendered with new width before Handles and Fill can be rendered
 };
