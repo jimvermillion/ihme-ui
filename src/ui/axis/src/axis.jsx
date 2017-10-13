@@ -260,9 +260,9 @@ Axis.propTypes = {
    * Follows d3 convention if number [size of inner tick lines](https://github.com/d3/d3-axis#axis_tickSizeInner)
    * If function that needs the value of a dynamic prop, it should be include a closure of the prop name as a string
    * whose return function passed to this component expect its props to be passes with the following signature:
-   * signature: (props) => {}
+   * signature: (props) => number
    */
-  tickSizeInner: PropTypes.oneOf([PropTypes.number, PropTypes.function]),
+  tickSizeInner: CommonPropTypes.dynamicProp,
 
   /**
    * [size of outer tick lines](https://github.com/d3/d3-axis#axis_tickSizeOuter)

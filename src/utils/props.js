@@ -13,6 +13,10 @@ export const CommonPropTypes = {
     PropTypes.array,
     PropTypes.object,
   ]),
+  dynamicProp: PropTypes.oneOfType([
+    PropTypes.number, // e.g., tickSizeInner
+    PropTypes.func, // function to be passed props, required to return a number
+  ]),
   style: PropTypes.oneOfType([
     PropTypes.object, // e.g., inline styles
     PropTypes.func, // function to be passed some datum, required to return an object
