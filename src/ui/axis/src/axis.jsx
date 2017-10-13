@@ -18,6 +18,7 @@ import {
 import {
   CommonPropTypes,
   propsChanged,
+  propResolver,
   PureComponent,
   stateFromPropUpdates,
 } from '../../../utils';
@@ -96,7 +97,7 @@ export default class Axis extends PureComponent {
     if (tickArguments) axis.tickArguments(tickArguments);
     if (tickFormat) axis.tickFormat(tickFormat);
     if (tickSize) axis.tickSize(tickSize);
-    if (tickSizeInner) axis.tickSizeInner(tickSizeInner);
+    if (tickSizeInner) axis.tickSizeInner(propResolver(this.props, tickSizeInner));
     if (tickSizeOuter) axis.tickSizeOuter(tickSizeOuter);
     if (tickPadding) axis.tickPadding(tickPadding);
     if (tickValues) axis.tickValues(tickValues);
