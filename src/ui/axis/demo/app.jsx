@@ -27,6 +27,16 @@ function App({ width, height }) {
           scale={scaleBand().domain(range(1970, 2011)).range([0, width - (padding.right + padding.left)])}
           width={width - (padding.right + padding.left)}
           height={height - (padding.bottom + padding.top)}
+          tickSizeInner={dynamicInnerTickFromPropValue('height')}
+          className="zero"
+          orientation="bottom"
+          padding={padding}
+        />
+        <XAxis
+          autoFilterTickValues
+          scale={scaleBand().domain(range(1970, 2011)).range([0, width - (padding.right + padding.left)])}
+          width={width - (padding.right + padding.left)}
+          height={height - (padding.bottom + padding.top)}
           orientation="top"
           label="Top XAxis"
           padding={padding}
@@ -39,6 +49,16 @@ function App({ width, height }) {
           height={height - (padding.bottom + padding.top)}
           orientation="bottom"
           label="Bottom XAxis"
+          padding={padding}
+        />
+        <YAxis
+          autoFilterTickValues
+          scale={scaleLinear().range([height - (padding.bottom + padding.top), 0])}
+          width={width - (padding.right + padding.left)}
+          height={height - (padding.bottom + padding.top)}
+          orientation="left"
+          tickSizeInner={dynamicInnerTickFromPropValue('width')}
+          className="zero"
           padding={padding}
         />
         <YAxis
