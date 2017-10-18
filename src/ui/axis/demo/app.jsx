@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from 'react-dom';
 import { scaleBand, scaleLinear } from 'd3';
 import range from 'lodash/range';
+import get from 'lodash/get';
 
 import { XAxis, YAxis } from '../';
 import { ResponsiveContainer } from '../../';
@@ -12,6 +13,10 @@ const padding = {
   left: 50,
   bottom: 40,
 };
+
+function dynamicInnerTickFromPropValue(prop) {
+  return (props) => -get(props, prop);
+}
 
 function App({ width, height }) {
   return (
