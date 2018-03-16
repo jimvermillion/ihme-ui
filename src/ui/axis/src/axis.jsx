@@ -101,10 +101,28 @@ export default class Axis extends React.PureComponent {
     if (tickPadding) axis.tickPadding(tickPadding);
     if (tickValues) axis.tickValues(tickValues);
 
-    this._axisSelection
-      .attr('class', classNames(styles.common, className))
-      .attr('transform', `translate(${translate.x}, ${translate.y})`)
-      .attr('style', Axis.concatStyle(style))
+    function transition(selection, { duration, delay }) {
+      if (duration || delay) {
+        const transitionSelection = selection
+          .transition()
+          .duration(duration);
+
+        if (delay) {
+          transitionSelection.delay(delay);
+        }
+
+        return transitionSelection;
+      }
+      return selection;
+    }
+
+    transition(
+      this._axisSelection
+        .attr('transform', `translate(${translate.x}, ${translate.y})`)
+        .attr('class', classNames(styles.common, className))
+        .attr('style', Axis.concatStyle(style)),
+      { duration: 333 }
+    )
       .call(axis);
   }
 

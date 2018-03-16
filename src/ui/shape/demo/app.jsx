@@ -1,14 +1,14 @@
 import React from 'react';
 import { render } from 'react-dom';
 
-import { schemeCategory10, scaleOrdinal } from 'd3';
+import { schemeCategory10, scaleOrdinal, scaleLinear, range } from 'd3';
 
 import { bindAll, maxBy, minBy, map, slice, uniqBy, without, xor } from 'lodash';
 
 import { dataGenerator } from '../../../utils';
 import AxisChart from '../../axis-chart';
 import { XAxis, YAxis } from '../../axis';
-import { MultiScatter, Scatter } from '../';
+import { Area, Line, MultiScatter, Scatter } from '../';
 
 const keyField = 'year_id';
 const valueField = 'population';
@@ -33,7 +33,7 @@ const locationData = [
   { location: 'Vietnam', values: data.filter((datum) => { return datum.location === 'Vietnam'; }) }
 ];
 
-const valueFieldDomain = [minBy(data, valueField)[valueField], maxBy(data, valueField)[valueField]];
+const valueFieldDomain = [minBy(data, `${valueField}_lb`)[`${valueField}_lb`], maxBy(data, `${valueField}_ub`)[`${valueField}_ub`]];
 
 const keyFieldDomain = map(uniqBy(data, keyField), (obj) => { return (obj[keyField]); });
 
@@ -49,6 +49,7 @@ class App extends React.Component {
     this.state = {
       selectedItems: [],
       country: 2,
+      otherCountry: 1,
     }
 
     bindAll(this, [
@@ -85,8 +86,73 @@ class App extends React.Component {
   };
 
   render() {
+    const specialAxisY = [0, maxBy(data, `${valueField}_ub`)[`${valueField}_ub`] + Math.floor(Math.random() * 1000)];
+    const specialAxisX = range(2000, 2010 + (this.state.country % 2 === 0 ? 0 : 10));
+
     return (
       <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <section>
+          <h3>Line</h3>
+          <h3>{locationData[this.state.country].location}</h3>
+          <button
+            onClick={() => {
+              this.setState({
+                country: (this.state.country + 1) % locationData.length,
+                otherCountry: (this.state.otherCountry + 1) % locationData.length,
+              });
+            }}
+          >
+            press to look at next country
+          </button>
+          <AxisChart
+            height={300}
+            width={500}
+            xDomain={specialAxisX}
+            xScaleType="point"
+            yDomain={specialAxisY}
+            yScaleType="linear"
+          >
+            <XAxis />
+            <Area
+              animate
+              data={data.filter(
+                ({ location }) => location === locationData[this.state.otherCountry].location,
+              )}
+              dataAccessors={{ x: 'year_id', y0: 'population_lb', y1: 'population_ub' }}
+              scales={{ x: scaleLinear(), y: scaleLinear() }}
+              style={{ fill: 'aquamarine' }}
+            />
+            <Line
+              animate
+              data={data.filter(
+                (datum) => datum.location === locationData[this.state.otherCountry].location,
+              )}
+              dataAccessors={{ x: 'year_id', y: 'population' }}
+              scales={{ x: scaleLinear(), y: scaleLinear() }}
+            />
+            <YAxis />
+            <Scatter
+              animate
+              data={data.filter(
+                (datum) => datum.location === locationData[this.state.country].location,
+              )}
+              dataAccessors={{
+                fill: keyField,
+                key: keyField,
+                x: keyField,    // year_id
+                y: valueField   // population
+              }}
+              fill="darkorange"
+              focus={this.state.focus}
+              onClick={this.onClick}
+              onMouseLeave={this.onMouseLeave}
+              onMouseMove={this.onMouseMove}
+              onMouseOver={this.onMouseOver}
+              selection={this.state.selectedItems}
+              shapeType="circle"
+            />
+          </AxisChart>
+        </section>
         <section>
           <h3>Multiple datasets</h3>
 {/* <pre><code>

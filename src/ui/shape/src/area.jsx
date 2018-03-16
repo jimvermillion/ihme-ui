@@ -1,4 +1,5 @@
 import React from 'react';
+import Animate from 'react-move/Animate';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { area } from 'd3';
@@ -26,6 +27,7 @@ export default class Area extends React.PureComponent {
       'onMouseLeave',
       'onMouseMove',
       'onMouseOver',
+      'renderPath',
     ]);
   }
 
@@ -69,28 +71,51 @@ export default class Area extends React.PureComponent {
     onMouseOver(event, data, this);
   }
 
-  render() {
+  renderPath(additionalProps) {
     const {
       className,
       clipPathId,
       style,
     } = this.props;
 
-    const {
-      path,
-    } = this.state;
-
     return (
       <path
         className={className && classNames(className)}
         clipPath={clipPathId && `url(#${clipPathId})`}
-        d={path}
+        d={this.state.path}
         onClick={this.onClick}
         onMouseLeave={this.onMouseLeave}
         onMouseMove={this.onMouseMove}
         onMouseOver={this.onMouseOver}
         style={style}
+        {...additionalProps}
       />
+    );
+  }
+
+  renderAnimatedPath() {
+    const { path } = this.state;
+    // TODO: expose a partially filled out animation function
+    // TODO: like in scatter that exposes data, d, and index!
+    return (
+      <Animate
+        start={{ d: path }}
+        update={{ d: [path] }}
+      >
+        {this.renderPath}
+      </Animate>
+    );
+  }
+
+  shouldAnimate() {
+    return true;// !!this.props.animate;
+  }
+
+  render() {
+    return (
+      this.shouldAnimate()
+        ? this.renderAnimatedPath()
+        : this.renderPath()
     );
   }
 }
