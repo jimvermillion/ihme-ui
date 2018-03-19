@@ -50,7 +50,7 @@ export default class Scatter extends React.PureComponent {
     this.state = stateFromPropUpdates(Scatter.propUpdates, this.props, nextProps, this.state);
   }
 
-  processDatum(datum) {
+  static processDatum(props, datum) {
     const {
       colorScale,
       dataAccessors,
@@ -58,7 +58,7 @@ export default class Scatter extends React.PureComponent {
       scales,
       shapeScale,
       shapeType,
-    } = this.props;
+    } = props;
 
     // Compute fill.
     const fillValue = propResolver(datum, dataAccessors.fill || dataAccessors.x);
@@ -94,7 +94,7 @@ export default class Scatter extends React.PureComponent {
       datum => ({
         data: datum,
         key: propResolver(datum, key),
-        state: this.processDatum(datum),
+        state: Scatter.processDatum(this.props, datum),
       }),
     );
   }
@@ -153,11 +153,12 @@ export default class Scatter extends React.PureComponent {
     // react-move properties `start`, `enter`, `update`, and `move` are populated by the default
     // animated behavior of IHME-UI Scatter component unless overridden in `animate` prop.
     const { animationProcessor } = this.state;
+    const { key } = this.props.dataAccessors;
 
     return (
       <NodeGroup
         data={data}
-        keyAccessor={({ key }) => key}
+        keyAccessor={datum => propResolver(datum, key)}
         start={animationProcessor('start')}
         enter={animationProcessor('enter')}
         update={animationProcessor('update')}
@@ -173,13 +174,13 @@ export default class Scatter extends React.PureComponent {
   }
 
   render() {
-    const data = this.processDataSet(this.state.sortedData);
+    if (this.shouldAnimate()) {
+      return this.renderAnimatedScatter(this.state.sortedData);
+    }
 
-    return (
-      this.shouldAnimate()
-      ? this.renderAnimatedScatter(data)
-      : this.renderScatter(data)
-    );
+    const processedData = this.processDataSet(this.state.sortedData);
+
+    return this.renderScatter(processedData);
   }
 }
 
@@ -370,12 +371,26 @@ Scatter.defaultProps = {
 
 Scatter.propUpdates = {
   animationProcessor: (state, _, prevProps, nextProps) => {
-    if (!propsChanged(prevProps, nextProps, ['animate'])) return state;
+    const animationPropNames = [
+      'animate',
+      'colorScale',
+      'dataAccessors',
+      'fill',
+      'scales',
+      'shapeScale',
+      'shapeType',
+    ];
+    if (!propsChanged(prevProps, nextProps, animationPropNames)) return state;
+
+    const datumProcessor = partial(Scatter.processDatum, nextProps);
+
     const animationProcessor = partial(
       animationProcessorFactory,
       nextProps.animate,
       Scatter.animatable,
+      datumProcessor,
     );
+
     return {
       ...state,
       animationProcessor,
